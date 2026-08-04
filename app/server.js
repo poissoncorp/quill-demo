@@ -167,6 +167,30 @@ async function quillApi(method, path, body) {
     return { status: res.status, json, raw };
 }
 
+let attached = null;   // { url, pilotUrl, mintedAt, ttlSeconds, maxInvocations }
+
+// Quill's domain is the name on the certificate it serves on 443, as
+// CN=*.<domain>. Reading it there means the operator does not have to supply
+// something the instance already knows. Verification is deliberately off: this
+// reads a name, it trusts nothing. The domain is only used to build the
+// dashboard link, since embed URLs come back fully formed from Quill.
+async function discoverDomain() {
+    if (quill.domain) return quill.domain;
+    const tls = require('tls');
+    quill.domain = await new Promise((resolve) => {
+        const socket = tls.connect(
+            { host: QUILL_HOST, port: 443, rejectUnauthorized: false, servername: 'discover' },
+            () => {
+                const cn = socket.getPeerCertificate()?.subject?.CN || '';
+                socket.end();
+                resolve(cn.startsWith('*.') ? cn.slice(2) : '');
+            });
+        socket.setTimeout(5000, () => { socket.destroy(); resolve(''); });
+        socket.on('error', () => resolve(''));
+    });
+    return quill.domain;
+}
+
 // The app slug, widget and agent come from Quill itself rather than from the
 // environment, so a provisioning run that happens while this process is
 // already up is picked up without a restart.

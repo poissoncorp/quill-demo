@@ -47,7 +47,7 @@ prompt ─▶ model ─▶ "call ordersInWindow(zoneId: 2, from: …, to: …)"
 
 The agent holds twelve named queries with descriptions and parameter schemas. It chooses which to run and with what arguments; Quill executes them and returns rows. That is the difference between "AI with database access" and "AI allowed to ask twelve specific questions", and it is what makes the thing safe to expose.
 
-Practical consequence: the agent is only as good as its tool set. Every problem hit while building this was a bug in the tools or the prompt, never in the model.
+Practical consequence: the agent is only as good as its tool set. Most of the tuning in this demo went into the tools and the system prompt, not the model choice.
 
 ## The attach path
 

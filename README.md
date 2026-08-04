@@ -105,7 +105,7 @@ To change the prompt or the query tools without creating another channel and inv
 docker run --rm --network quill-demo_default -v "$PWD:/w" -w /w --env-file .env -e AGENT_ONLY=1 node:20-alpine node quill/finish-setup.mjs
 ```
 
-The system prompt in `quill/finish-setup.mjs` carries several workarounds for behaviour that fails silently. They are commented in place. Removing them makes the agent answer confidently and wrongly, so read the comment before deleting one.
+The system prompt in `quill/finish-setup.mjs` is load bearing. It tells the agent how to page around the per-call row limit, which timestamp format to use, and to resolve identifiers to names. Read the comment next to a rule before removing it; several of them are the difference between a correct answer and a confident wrong one.
 
 ## Layout
 
@@ -127,7 +127,7 @@ quill/widget-forkly.css      widget theme, matched to the app
 
 Forkly is deliberately Node and Express, not RavenDB and not .NET. The audience should see somebody else's ordinary app, not the product wearing a costume.
 
-[ARCHITECTURE.md](ARCHITECTURE.md) is the map: the four processes, how a question gets answered, and what crosses which trust boundary. [PLAN.md](PLAN.md) explains why the demo is shaped this way.
+[ARCHITECTURE.md](ARCHITECTURE.md) is the map: the four processes, how a question gets answered, and what crosses which trust boundary.
 
 ## Licence
 

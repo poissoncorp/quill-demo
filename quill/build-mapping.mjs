@@ -9,10 +9,8 @@
 // That is what lets "why do Friday deliveries fall apart in Riverside" be
 // served from a single collection instead of a six-way join.
 //
-// Written in Node rather than PowerShell for one specific reason:
-// ConvertTo-Json collapses a single-element array into a string, and Quill's
-// DTO expects string[]. The result is HTTP 400 with an empty body, a binding
-// error with no hint whatsoever. In JS a one-element array stays an array.
+// Note that the array fields are arrays even when they hold a single element.
+// The mapping DTO is strict about that.
 
 import { readFileSync, writeFileSync } from 'node:fs';
 

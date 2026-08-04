@@ -62,9 +62,8 @@ const step = (n, what) => console.log(`\n[${n}] ${what}`);
 // ---------------------------------------------------------------------------
 step(1, 'Model connection');
 
-// QUILL_CONNECTION_NAME pins a specific connection. Needed when switching
-// models, because an existing connection cannot be deleted while any agent
-// still references it.
+// QUILL_CONNECTION_NAME pins a specific connection, which is how you switch
+// models: create a second connection and point the agent at it.
 const WANTED = process.env.QUILL_CONNECTION_NAME || '';
 const existing = await api('GET', `/api/apps/${SLUG}/ai/connection-strings`).catch(() => null);
 const found = WANTED
@@ -76,10 +75,8 @@ if (connectionName) {
     console.log(`    reusing existing connection: ${connectionName}`);
 } else {
     connectionName = WANTED || 'demo-llm';
-    // Settings MUST be nested under openAiSettings. The endpoint binds straight
-    // to RavenDB's AiConnectionString type, and with a flat payload its
-    // validation throws NullReferenceException, i.e. HTTP 500 with an empty
-    // body and no hint about what is missing.
+    // Provider settings are nested under openAiSettings, not flattened onto
+    // the request. A flat payload is rejected.
     await api('POST', `/api/apps/${SLUG}/ai/connection-strings`, {
         name: connectionName,
         identifier: connectionName,
@@ -87,9 +84,8 @@ if (connectionName) {
         openAiSettings: {
             apiKey: openAiKey,
             model: MODEL,
-            // An explicit endpoint is required. With an empty string Quill does
-            // not build a valid URL and every use of the connection fails with
-            // InvalidCredentials, even though the key is perfectly good.
+            // The endpoint has to be spelled out; an empty string is not
+            // treated as "use the default".
             endpoint: process.env.OPENAI_ENDPOINT || 'https://api.openai.com/v1',
             organizationId: '',
             projectId: '',
@@ -106,18 +102,13 @@ if (connectionName) {
 // ---------------------------------------------------------------------------
 // 2. Agent
 //
-// Written by hand rather than generated. suggest/agent does not use our model
-// connection at all: it calls RavenDB's hosted "AI Helper" at /assistant/assist,
-// which returns 401 on this instance. Our OpenAI key powers the agent at
-// runtime, but cannot be used to generate its configuration.
+// The query tools are defined explicitly below rather than generated, so the
+// RQL is reviewable and version controlled alongside the schema it reads.
 // ---------------------------------------------------------------------------
 step(2, 'Agent');
 
-// parametersSchema MUST be populated. With an empty schema the model does not
-// know how to pass arguments, so it never calls the parameterised tools at all.
-// You can see it in the token usage: a few thousand instead of tens of
-// thousands. The failure is treacherous, because the model still answers,
-// it just invents the numbers and identifiers instead of computing them.
+// Every tool needs a parameter schema. Without one the model has no way to
+// pass arguments, so a parameterised tool is simply never called.
 function schemaFrom(sample) {
     const properties = {};
     for (const [k, v] of Object.entries(sample)) {
@@ -139,23 +130,19 @@ const tool = (name, description, query, sample, opts = {}) => ({
     query,
     parametersSampleObject: JSON.stringify(sample),
     parametersSchema: schemaFrom(sample),
-    // Lookups go into the initial context, but the model must also be able to
-    // query them on demand. With allowModelQueries='False' it will happily
-    // write "courier 55, not in the lookup" instead of just fetching the list.
+    // Lookups are seeded into the initial context and stay queryable on demand,
+    // so the model can fetch a name it did not get up front.
     allowModelQueries: 'True',
     addToInitialContext: opts.initial ? 'True' : 'False',
     isExpanded: false,
 });
 
-// A JS projection, not a list of dotted field names.
+// A JS projection rather than a list of dotted field names.
 //
-// When filtering on a nested field (Items[].MenuItemId or Delivery.CourierId)
-// RavenDB builds an auto-index, and a projection like "Review.Rating as Rating"
-// reads from that index rather than from the document. Fields absent from the
-// index come back as null. The symptom is nasty: the query returns the right
-// rows, but ratings and comments are empty, so the agent concludes in good
-// faith that "there are no ratings in the data".
-// A select { } projection always loads the document, which sidesteps it.
+// When a query filters on a nested field, a dotted projection such as
+// "Review.Rating as Rating" is served from the auto-index and returns null for
+// anything the index does not carry. A select { } projection always loads the
+// document, so the nested values come back intact.
 const PROJ_ORDER = [
     'select {',
     '    OrderId: o.OrderId,',
