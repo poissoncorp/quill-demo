@@ -1,60 +1,57 @@
 # Forkly: a live Quill demo
 
-An ordinary app on Postgres gains conversational AI over its own data, in one click, in front of the audience.
-
-Forkly is a food delivery marketplace operations console. Tables, filters, exports, no AI anywhere in it. Quill mirrors its database, an agent is configured over the mirror, and a single button hands the app a chat widget. Nothing in Forkly is rebuilt or redeployed.
-
-The whole demo is driven from one page: **http://localhost:8080**
-
-## Before you start
-
-You need four things:
-
-| | |
-|---|---|
-| **Docker** | with Compose. Ports `3000`, `5432`, `8080` and `443` free. |
-| **A Quill licence key** | `QUILL-…`, from RavenDB. |
-| **A Quill dashboard key** | `QUILLDASH-…`, created in the Quill dashboard. |
-| **An OpenAI API key** | `sk-…`. Pick a non-reasoning model, see [Choosing a model](#choosing-a-model). |
-
-`setup.sh` starts Quill for you, so you do not need an instance running beforehand.
-
-> **Back up the Quill volume.** On first start Quill downloads a one-time setup package, tied to your licence, and keeps it in the `quill-data` volume. The licence API will not issue it a second time: starting fresh with the same key fails with `license API returned 404 Not Found retrieving the setup package` and bootstrap never leaves `NeedsActivation`. Treat that volume like a certificate, not a cache.
+An ordinary app on Postgres gains conversational AI over its own data, in one click, in front of an audience. Forkly is a food delivery operations console with no AI in it; Quill mirrors its database and hands it a chat widget. Nothing in Forkly is rebuilt or redeployed.
 
 ## Quick start
+
+**You need:** Docker with Compose, ports `3000`, `5432`, `8080` and `443` free, and three keys: a Quill licence key (`QUILL-…`), a Quill dashboard API key (`QUILLDASH-…`) and an OpenAI key (`sk-…`).
+
+**1. Run it.**
 
 ```bash
 ./scripts/setup.sh
 ```
 
-It asks for the three keys if it does not find them, and writes `.env` itself. Nothing needs editing by hand. Once `.env` is complete, plain `docker compose up -d` does the same job.
+It asks for the three keys if it cannot find them, hides the input, and writes `.env` itself. Nothing has to be edited by hand. Expect a few minutes on the first run, most of it Quill bootstrapping on a cold volume.
 
-Then open **http://localhost:8080** and press the button.
+**2. Open the pilot deck at http://localhost:8080.** The three dots at the top must all be green. That is your go/no-go signal.
 
-`setup.sh` is safe to re-run; every step checks whether it has already been done. It takes a few minutes on a cold start, most of it Quill bootstrapping. In order it:
+**3. Press "Enable Quill".** A chat appears embedded in the deck, and a bubble appears in Forkly at http://localhost:3000. Ask one of the suggested questions to confirm the agent answers.
 
-1. Starts Postgres, the app, the pilot deck and Quill. Postgres runs `db/init/*.sql` on first boot: schema, grants, and the data generator.
-2. Waits for Quill to bootstrap. It derives its own domain from your licence key.
-3. Connects Quill to Postgres, maps the tables into a document model, and waits for the initial mirror.
-4. Creates the model connection, the agent with its query tools, and the widget channel.
-5. Waits for the app to discover all of it and report itself configured.
+**4. Press "reset demo" at the bottom of the deck.** This revokes the links and hides the bubble, so the audience sees the app before the AI rather than after. **You are now demoable**: follow the runbook below.
 
-If a status dot at the top of the pilot is not green, check `docker compose ps` and `docker compose logs quill`.
+Re-running `setup.sh` is safe; every step skips what already exists. Once `.env` is filled in, plain `docker compose up -d` does the same job.
+
+### If something is not green
+
+| Symptom | Where to look |
+|---|---|
+| dots never turn green | `docker compose ps`, then `docker compose logs quill` |
+| provisioning failed | `docker compose logs setup` |
+| app says not configured | `docker compose logs app` |
+| Quill stuck on `NeedsActivation` | the licence key is wrong, or its setup package was already claimed, see the warning below |
+
+> **Back up the Quill volume.** On first start Quill downloads a one-time setup package tied to your licence and keeps it in the `quill-data` volume. The licence API will not issue it twice: starting fresh with the same key fails with `license API returned 404 Not Found retrieving the setup package` and bootstrap never leaves `NeedsActivation`. Treat that volume like a certificate, not a cache.
 
 ### Already running a Quill instance?
 
-`docker compose up` will collide with it on port 443. Either stop yours first, or leave the `quill` service out and point the existing one at the demo network under that name:
+`docker compose up` will collide with it on port 443. Either stop yours first, or leave the `quill` service out and attach the existing one to the demo network under that name:
 
 ```bash
 docker compose up -d postgres app pilot
 docker network connect --alias quill quill-demo_default <your-container>
-```
-
-Then run the provisioning service on its own:
-
-```bash
 docker compose run --rm setup
 ```
+
+### What setup.sh actually does
+
+1. Starts Postgres, the app, the pilot deck and Quill. Postgres runs `db/init/*.sql` on first boot: schema, grants, and the data generator.
+2. Waits for Quill to bootstrap. It derives its own domain from your licence key.
+3. Connects Quill to Postgres, maps the tables into a document model, waits for the initial mirror.
+4. Creates the model connection, the agent with its query tools, and the widget channel.
+5. Waits for the app to discover all of it and report itself configured.
+
+Steps 3 and 4 are the one-shot `setup` service in `docker-compose.yml`, so they also run on a plain `docker compose up`.
 
 ## Presenter runbook
 
