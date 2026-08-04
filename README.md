@@ -30,6 +30,7 @@ Re-running `setup.sh` is safe; every step skips what already exists. Once `.env`
 | provisioning failed | `docker compose logs setup` |
 | app says not configured | `docker compose logs app` |
 | Quill stuck on `NeedsActivation` | the licence key is wrong, or its setup package was already claimed, see the warning below |
+| app configured but the mirror stays empty | `curl -H "X-Api-Key: $QUILL_API_KEY" https://api.$QUILL_DOMAIN/api/apps/<slug>/cdc/errors` |
 
 > **Back up the Quill volume.** On first start Quill downloads a one-time setup package tied to your licence and keeps it in the `quill-data` volume. The licence API will not issue it twice: starting fresh with the same key fails with `license API returned 404 Not Found retrieving the setup package` and bootstrap never leaves `NeedsActivation`. Treat that volume like a certificate, not a cache.
 

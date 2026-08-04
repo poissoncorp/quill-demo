@@ -138,3 +138,11 @@ ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT ON TABLES TO quill_cdc;
 -- grants no write access.
 GRANT REFERENCES ON ALL TABLES IN SCHEMA public TO quill_cdc;
 ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT REFERENCES ON TABLES TO quill_cdc;
+
+-- CDC creates its own publication, so the account needs CREATE on the database.
+-- Without it the task registers, reports itself enabled, and then fails in the
+-- Extraction step with "Insufficient permissions to create publication".
+-- Nothing surfaces on the app or in the collection counts: you simply get an
+-- app that mirrors zero documents. The error is only visible under
+-- /api/apps/<slug>/cdc/errors.
+GRANT CREATE ON DATABASE zjadlo TO quill_cdc;

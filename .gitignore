@@ -11,3 +11,6 @@ quill/provision.json
 
 # Dependencies
 app/node_modules/
+
+# Local machine overrides (e.g. pointing Quill at an existing volume)
+docker-compose.override.yml
