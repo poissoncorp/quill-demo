@@ -31,6 +31,9 @@ Re-running `setup.sh` is safe; every step skips what already exists. Once `.env`
 | app says not configured | `docker compose logs app` |
 | Quill stuck on `NeedsActivation` | the licence key is wrong, or its setup package was already claimed, see the warning below |
 | app configured but the mirror stays empty | `curl -H "X-Api-Key: $QUILL_API_KEY" https://api.$QUILL_DOMAIN/api/apps/<slug>/cdc/errors` |
+| empty HTTP 500 creating the model connection | `docker compose logs quill`, see the licence note below |
+
+> **Known blocker on the current image.** The pinned build moved model connections to server-wide scope, and RavenDB gates those behind a licence feature. If step 4 fails with an empty HTTP 500, check `docker compose logs quill` for `Your license doesn't support adding server wide connection strings`. There is no per-app fallback on this build, so a licence that allows it is required. Ask RavenDB.
 
 > **Back up the Quill volume.** On first start Quill downloads a one-time setup package tied to your licence and keeps it in the `quill-data` volume. The licence API will not issue it twice: starting fresh with the same key fails with `license API returned 404 Not Found retrieving the setup package` and bootstrap never leaves `NeedsActivation`. Treat that volume like a certificate, not a cache.
 

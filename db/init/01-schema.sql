@@ -139,10 +139,28 @@ ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT ON TABLES TO quill_cdc;
 GRANT REFERENCES ON ALL TABLES IN SCHEMA public TO quill_cdc;
 ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT REFERENCES ON TABLES TO quill_cdc;
 
--- CDC creates its own publication, so the account needs CREATE on the database.
--- Without it the task registers, reports itself enabled, and then fails in the
--- Extraction step with "Insufficient permissions to create publication".
--- Nothing surfaces on the app or in the collection counts: you simply get an
--- app that mirrors zero documents. The error is only visible under
--- /api/apps/<slug>/cdc/errors.
+-- CDC creates its own publication on the source database, and PostgreSQL is
+-- strict about who may do that:
+--
+--   CREATE PUBLICATION ... FOR TABLE  requires ownership of those tables
+--   CREATE PUBLICATION FOR ALL TABLES requires superuser
+--
+-- So a purely read-only account cannot run CDC at all. It needs CREATE on the
+-- database and it has to own the tables it publishes. Ownership is the smaller
+-- of the two evils here: it stays a non-superuser role, scoped to this schema.
+--
+-- Get this wrong and nothing tells you. The CDC task registers, reports itself
+-- enabled, and then fails in the Extraction step with "Insufficient permissions
+-- to create publication". The app looks healthy and mirrors zero documents.
+-- The error is visible only under /api/apps/<slug>/cdc/errors.
 GRANT CREATE ON DATABASE zjadlo TO quill_cdc;
+
+DO $$
+DECLARE t text;
+BEGIN
+    FOR t IN SELECT tablename FROM pg_tables WHERE schemaname = 'public'
+    LOOP EXECUTE format('ALTER TABLE public.%I OWNER TO quill_cdc', t); END LOOP;
+END $$;
+
+-- Ownership moved, so re-grant what the app needs to read.
+GRANT SELECT ON ALL TABLES IN SCHEMA public TO zjadlo_app;

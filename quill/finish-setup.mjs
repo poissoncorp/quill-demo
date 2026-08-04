@@ -57,6 +57,42 @@ async function api(method, path, body) {
 
 const step = (n, what) => console.log(`\n[${n}] ${what}`);
 
+// Model connections moved between builds, in both path and scope:
+//
+//   older: list and create at /apps/<slug>/ai/connection-strings, per app,
+//          response shaped { items: [...] }
+//   newer: list at /apps/<slug>/connection-strings, create at the instance
+//          level under /ai/connection-strings, response a bare array
+//
+// Probe both and normalise, so this script works against either.
+async function probe(method, path, body) {
+    const res = await fetch(`${BASE}${path}`, {
+        method,
+        headers: { 'X-Api-Key': apiKey, 'Content-Type': 'application/json' },
+        body: body === undefined ? undefined : JSON.stringify(body),
+    }).catch(() => null);
+    return res ? res.status : 0;
+}
+
+async function listConnections() {
+    for (const path of [`/api/apps/${SLUG}/connection-strings`,
+                        `/api/apps/${SLUG}/ai/connection-strings`]) {
+        const r = await api('GET', path).catch(() => null);
+        if (r) return Array.isArray(r) ? r : (r.items ?? []);
+    }
+    return [];
+}
+
+let createPath = null;
+async function connectionCreatePath() {
+    if (createPath) return createPath;
+    for (const candidate of ['/api/ai/connection-strings',
+                             `/api/apps/${SLUG}/ai/connection-strings`]) {
+        if (await probe('POST', candidate, {}) !== 404) { createPath = candidate; return createPath; }
+    }
+    fail('no endpoint on this Quill build accepts a model connection.');
+}
+
 // ---------------------------------------------------------------------------
 // 1. Model connection
 // ---------------------------------------------------------------------------
@@ -65,11 +101,10 @@ step(1, 'Model connection');
 // QUILL_CONNECTION_NAME pins a specific connection, which is how you switch
 // models: create a second connection and point the agent at it.
 const WANTED = process.env.QUILL_CONNECTION_NAME || '';
-const existing = await api('GET', `/api/apps/${SLUG}/ai/connection-strings`).catch(() => null);
-const found = WANTED
-    ? existing?.items?.find(i => i.name === WANTED)?.name
-    : existing?.items?.[0]?.name;
-let connectionName = found;
+const existing = await listConnections();
+let connectionName = WANTED
+    ? existing.find(i => i.name === WANTED)?.name
+    : existing[0]?.name;
 
 if (connectionName) {
     console.log(`    reusing existing connection: ${connectionName}`);
@@ -77,7 +112,7 @@ if (connectionName) {
     connectionName = WANTED || 'demo-llm';
     // Provider settings are nested under openAiSettings, not flattened onto
     // the request. A flat payload is rejected.
-    await api('POST', `/api/apps/${SLUG}/ai/connection-strings`, {
+    await api('POST', await connectionCreatePath(), {
         name: connectionName,
         identifier: connectionName,
         modelType: 'Chat',
