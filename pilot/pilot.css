@@ -1,0 +1,345 @@
+/* Pilot deck. Runs the demo: four beats, one real button, live numbers. */
+
+:root {
+  --bg:      #0f1425;   /* RavenDB --brand-black */
+  --card:    #171d31;   /* lifted from --brand-radial */
+  --card-2:  #1c2440;
+  --line:    #27304a;
+  --text:    #eaeef6;
+  --muted:   #97a0b3;
+  --dim:     #626c80;
+  --violet:  #5a76f0;   /* blue -> purple midpoint */
+  --violet-2:#388ee9;   /* RavenDB --brand-blue */
+  --pink:    #7b51ff;   /* RavenDB --brand-purple */
+  --amber:   #1cc8ee;   /* RavenDB --brand-turquoise */
+  --good:    #63ffa6;   /* RavenDB --brand-cloud-green */
+  --bad:     #f2685f;
+  --mono: ui-monospace, "SF Mono", "JetBrains Mono", "Cascadia Mono", Menlo, monospace;
+  --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, system-ui, sans-serif;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0; background: var(--bg); color: var(--text);
+  font-family: var(--sans); font-size: 15px; line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+.glow {
+  position: fixed; inset: 0; pointer-events: none; z-index: 0;
+  background:
+    radial-gradient(820px 460px at 18% -8%, rgba(56,142,233,.22), transparent 62%),
+    radial-gradient(760px 420px at 88% 4%, rgba(123,81,255,.20), transparent 62%),
+    radial-gradient(900px 500px at 50% 108%, rgba(28,200,238,.10), transparent 62%);
+}
+
+main, .hero { position: relative; z-index: 1; }
+
+/* ------------------------------------------------------------------- hero */
+
+.hero { max-width: 900px; margin: 0 auto; padding: 66px 28px 30px; text-align: center; }
+
+.badge {
+  display: inline-flex; align-items: center; gap: 7px;
+  font-size: 11px; font-weight: 600; letter-spacing: .16em; text-transform: uppercase;
+  color: #bcd7ff;
+  background: rgba(56,142,233,.14);
+  border: 1px solid rgba(56,142,233,.36);
+  padding: 5px 14px; border-radius: 999px;
+}
+.badge::before { content: "✦"; font-size: 12px; letter-spacing: 0; }
+
+.hero h1 {
+  margin: 20px 0 0; font-size: clamp(28px, 4.6vw, 46px);
+  line-height: 1.16; font-weight: 640; letter-spacing: -1.2px;
+}
+.hero h1 em {
+  font-style: normal;
+  background: linear-gradient(100deg, var(--violet) 5%, var(--pink) 50%, var(--amber) 95%);
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+
+.status { display: flex; gap: 9px; justify-content: center; margin-top: 26px; flex-wrap: wrap; }
+
+.dot {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-size: 12.5px; color: var(--muted);
+  background: var(--card); border: 1px solid var(--line);
+  padding: 6px 14px; border-radius: 999px;
+}
+.dot i { width: 7px; height: 7px; border-radius: 50%; background: var(--dim); transition: background .3s, box-shadow .3s; }
+.dot.ok   i { background: var(--good); box-shadow: 0 0 10px var(--good); }
+.dot.bad  i { background: var(--bad);  box-shadow: 0 0 10px var(--bad); }
+.dot.wait i { animation: blink 1.1s infinite; }
+@keyframes blink { 50% { opacity: .25; } }
+
+/* -------------------------------------------------------------------- acts */
+
+main { max-width: 900px; margin: 0 auto; padding: 22px 28px 90px; }
+
+.act {
+  display: flex; gap: 20px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 24px 26px;
+  margin-bottom: 14px;
+  transition: opacity .45s, filter .45s, border-color .45s;
+}
+.act.locked { opacity: .34; filter: saturate(.35); pointer-events: none; }
+.act.done { border-color: rgba(63,207,142,.32); }
+
+.n {
+  flex: 0 0 32px; height: 32px; border-radius: 10px;
+  display: grid; place-items: center;
+  font-size: 14px; font-weight: 640;
+  background: var(--card-2); border: 1px solid var(--line); color: var(--muted);
+}
+.act.done .n { background: rgba(63,207,142,.14); border-color: rgba(63,207,142,.35); color: var(--good); }
+
+.body { flex: 1; min-width: 0; }
+.body h2 { margin: 3px 0 6px; font-size: 19px; font-weight: 620; letter-spacing: -.35px; }
+.body > p { margin: 0 0 16px; color: var(--muted); font-size: 14.5px; }
+.body strong { color: var(--text); }
+
+/* ------------------------------------------------------------------ buttons */
+
+.btn {
+  display: inline-flex; align-items: center; gap: 8px;
+  font: inherit; font-size: 14px; font-weight: 550;
+  text-decoration: none; cursor: pointer;
+  padding: 9px 16px; border-radius: 10px;
+  border: 1px solid var(--line); background: var(--card-2); color: var(--text);
+  transition: border-color .16s, transform .16s, background .16s;
+}
+.btn.ghost:hover { border-color: #3d4759; background: #1d2331; transform: translateY(-1px); }
+.arr { color: var(--dim); }
+
+/* THE button. This is the moment of the demo, so it is allowed to show off. */
+.enable {
+  position: relative; overflow: hidden;
+  appearance: none; border: 0; cursor: pointer;
+  font: inherit; font-size: 16.5px; font-weight: 650; letter-spacing: -.2px;
+  color: #fff;
+  padding: 16px 34px; border-radius: 14px;
+  background: linear-gradient(100deg, var(--violet-2), var(--violet) 42%, var(--pink) 78%, var(--amber));
+  background-size: 220% 100%;
+  box-shadow: 0 12px 34px rgba(90,110,240,.42), inset 0 1px 0 rgba(255,255,255,.22);
+  animation: drift 7s ease-in-out infinite, breathe 3.1s ease-in-out infinite;
+  transition: transform .14s;
+}
+.enable:hover  { transform: translateY(-2px) scale(1.015); }
+.enable:active { transform: translateY(0) scale(.985); }
+.enable:disabled { cursor: default; animation: none; opacity: .75; }
+
+@keyframes drift { 0%,100% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } }
+@keyframes breathe {
+  0%,100% { box-shadow: 0 12px 34px rgba(90,110,240,.42), 0 0 0 0 rgba(123,81,255,.45), inset 0 1px 0 rgba(255,255,255,.22); }
+  60%     { box-shadow: 0 12px 34px rgba(90,110,240,.42), 0 0 0 18px rgba(123,81,255,0),  inset 0 1px 0 rgba(255,255,255,.22); }
+}
+
+/* light sweeping across the button */
+.enable .shine {
+  position: absolute; top: 0; bottom: 0; width: 45%;
+  left: -60%;
+  background: linear-gradient(100deg, transparent, rgba(255,255,255,.42), transparent);
+  transform: skewX(-18deg);
+  animation: sweep 3.4s ease-in-out infinite;
+}
+@keyframes sweep { 0% { left: -60%; } 55%, 100% { left: 130%; } }
+
+.enable.busy { animation: none; }
+.enable.busy .label::after {
+  content: ""; display: inline-block; width: 13px; height: 13px; margin-left: 9px;
+  vertical-align: -2px;
+  border: 2px solid rgba(255,255,255,.35); border-top-color: #fff; border-radius: 50%;
+  animation: spin .7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.enable.done {
+  animation: none;
+  background: linear-gradient(100deg, #0e8f5a, #2fd68a);
+  box-shadow: 0 10px 28px rgba(99,255,166,.28);
+}
+.enable.done .shine { display: none; }
+
+.took {
+  margin-top: 12px; font-family: var(--mono); font-size: 12.5px; color: var(--good);
+}
+.raw {
+  margin: 10px 0 0; padding: 12px 14px; max-height: 190px; overflow: auto;
+  background: #0a0c11; border: 1px solid var(--line); border-radius: 10px;
+  font-family: var(--mono); font-size: 11.5px; line-height: 1.55; color: #9fb2cc;
+  white-space: pre-wrap; word-break: break-word;
+}
+.raw.err { color: #ffb3ad; border-color: rgba(242,104,95,.4); }
+
+.setup {
+  margin: 0 0 16px; padding: 13px 15px;
+  background: rgba(255,143,63,.07); border: 1px solid rgba(255,143,63,.3);
+  border-radius: 11px;
+}
+.setup strong { display: block; color: var(--amber); font-size: 13.5px; margin-bottom: 3px; }
+.setup p { margin: 0; font-size: 13px; color: var(--muted); }
+
+.chatframe {
+  height: 380px; border-radius: 10px; overflow: hidden;
+  border: 1px solid var(--line); background: #fff;
+  display: grid; place-items: center;
+}
+.chatframe iframe { width: 100%; height: 100%; border: 0; display: block; }
+.chatempty { color: var(--dim); font-size: 13px; background: var(--card); width: 100%; height: 100%; display: grid; place-items: center; }
+
+.asks { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: 13px; color: var(--dim); }
+.asks em { font-style: normal; color: var(--dim); opacity: .8; }
+.ask {
+  font-family: var(--sans); font-size: 12.5px; color: #cbb8ff;
+  background: rgba(123,81,255,.12); border: 1px solid rgba(123,81,255,.28);
+  padding: 6px 12px; border-radius: 999px; cursor: pointer;
+  transition: background .15s, border-color .15s, color .15s, transform .1s;
+}
+.ask:hover  { background: rgba(123,81,255,.2); border-color: rgba(123,81,255,.5); color: #e2d8ff; }
+.ask:active { transform: translateY(1px); }
+.ask.copied {
+  color: var(--good); background: rgba(99,255,166,.12); border-color: rgba(99,255,166,.4);
+}
+.ask.copied::after { content: "  copied"; opacity: .75; font-size: 11.5px; }
+
+/* ------------------------------------------------------------------- punch */
+
+.punch {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px;
+  margin-top: 26px;
+}
+@media (max-width: 700px) { .punch { grid-template-columns: repeat(2, 1fr); } }
+
+.tcard {
+  background: var(--card); border: 1px solid var(--line);
+  border-radius: 13px; padding: 15px 16px; text-align: center;
+}
+.tcard .v {
+  font-size: 22px; font-weight: 640; letter-spacing: -.5px;
+  font-variant-numeric: tabular-nums;
+  background: linear-gradient(100deg, var(--violet), var(--pink));
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+.tcard .t {
+  margin-top: 5px; font-size: 10.5px; letter-spacing: .07em;
+  text-transform: uppercase; color: var(--dim);
+}
+
+/* ---------------------------------------------------------------- reset bar
+   A stagehand control, not part of the story. Kept nearly invisible until
+   the pointer is near it, so it never competes with the demo for attention. */
+.resetbar { display: flex; justify-content: flex-end; margin: 28px 0 40px; }
+.btn.reset {
+  padding: 4px 8px; font-size: 11px; letter-spacing: .04em;
+  border: 0; background: none; color: var(--muted);
+  opacity: .25; cursor: pointer;
+  transition: opacity .18s, color .18s;
+}
+.resetbar:hover .btn.reset { opacity: .6; }
+.btn.reset:hover  { opacity: 1 !important; color: #8fbcf5; }
+.btn.reset:focus-visible { opacity: 1; outline: 1px solid var(--line); border-radius: 6px; }
+.btn.reset[disabled] { opacity: .25 !important; cursor: default; }
+
+/* ------------------------------------------------------------- act 2 result
+   This deck is used in front of buyers, not reviewers. The outcome is stated
+   in plain words; the JSON is one click away for whoever asks. */
+.result { margin-top: 14px; display: grid; gap: 8px; }
+.rrow {
+  display: flex; align-items: baseline; gap: 9px;
+  font-size: 14.5px;
+}
+.rrow .tick {
+  flex: none; width: 18px; height: 18px; border-radius: 50%;
+  display: inline-grid; place-items: center;
+  font-size: 11px; color: #06251a;
+  background: var(--good); align-self: center;
+}
+.rrow strong { font-weight: 600; }
+.rrow span:last-child { color: var(--muted); }
+.rmeta { margin-top: 4px; font-size: 13px; color: var(--dim); }
+
+.rawtoggle {
+  margin-top: 12px; padding: 0; border: 0; background: none;
+  font: inherit; font-size: 12px; color: var(--dim);
+  text-decoration: underline; text-underline-offset: 3px;
+  cursor: pointer; opacity: .7;
+}
+.rawtoggle:hover { opacity: 1; color: var(--muted); }
+
+/* --------------------------------------------------------------- act 3/4
+   Act 3 used to be two cards side by side, one of which held a button and a
+   lot of nothing next to a tall chat frame. The chat is the point, so it now
+   runs full width and the app link is a sentence, not a panel. */
+.chatframe { width: 100%; margin-top: 16px; }
+a.inline {
+  color: var(--violet-2); text-decoration: none;
+  border-bottom: 1px solid rgba(56,142,233,.35);
+}
+a.inline:hover { border-bottom-color: var(--violet-2); }
+
+/* Act 4 is the "how" for a non-technical room: what was done, in order,
+   in plain words. The dashboard link comes after, not instead. */
+.steps { counter-reset: s; list-style: none; margin: 18px 0 22px; padding: 0; display: grid; gap: 14px; }
+.steps li {
+  counter-increment: s;
+  display: grid; grid-template-columns: 26px 1fr; column-gap: 13px; row-gap: 2px;
+  align-items: baseline;
+}
+.steps li::before {
+  content: counter(s);
+  grid-row: span 2;
+  width: 24px; height: 24px; border-radius: 8px;
+  display: grid; place-items: center; align-self: start;
+  font-size: 12px; font-weight: 600; font-variant-numeric: tabular-nums;
+  color: var(--violet-2);
+  background: rgba(56,142,233,.12); border: 1px solid rgba(56,142,233,.28);
+}
+.steps li strong { font-size: 15.5px; font-weight: 600; }
+.steps li span   { font-size: 13.5px; color: var(--muted); }
+
+/* The result ticks arrive one after another, and only after Enable is
+   pressed. Hidden by default so nothing leaks before the click. */
+.rrow { opacity: 0; transform: translateY(6px); transition: opacity .34s ease, transform .34s ease; }
+.rrow.in { opacity: 1; transform: none; }
+
+/* --------------------------------------------------------------- motion
+   Restrained on purpose. Each one marks a real state change, nothing
+   animates just to be seen moving. */
+
+/* Act 3 unlocking after Enable, rather than snapping on. */
+.act { transition: opacity .5s ease, filter .5s ease, border-color .4s ease; }
+.act.locked { opacity: .42; filter: saturate(.5); }
+
+/* The chat arriving in the page. */
+.chatframe iframe { animation: frame-in .5s cubic-bezier(.2,.9,.3,1) both; }
+@keyframes frame-in { from { opacity: 0; transform: translateY(10px) scale(.99); } to { opacity: 1; transform: none; } }
+
+/* The timing line, which is the punchline of act 2. */
+.took { animation: fade-up .34s ease both; }
+@keyframes fade-up { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+
+/* One soft pulse when the button flips to done, then it settles. */
+.enable.done { animation: settle .7s ease both; }
+@keyframes settle {
+  0%   { box-shadow: 0 10px 28px rgba(99,255,166,.28), 0 0 0 0 rgba(99,255,166,.5); }
+  100% { box-shadow: 0 10px 28px rgba(99,255,166,.28), 0 0 0 20px rgba(99,255,166,0); }
+}
+
+/* Status dots breathe faintly once they are green, so the header reads live. */
+.dot.ok i { animation: dot-breathe 2.8s ease-in-out infinite; }
+@keyframes dot-breathe { 0%,100% { opacity: 1; } 50% { opacity: .45; } }
+
+/* The four steps ease in together, once, when act 4 is reached. */
+.steps li { animation: fade-up .4s ease both; }
+.steps li:nth-child(1) { animation-delay: .04s; }
+.steps li:nth-child(2) { animation-delay: .12s; }
+.steps li:nth-child(3) { animation-delay: .20s; }
+
+@media (prefers-reduced-motion: reduce) {
+  * { animation: none !important; transition: none !important; }
+}

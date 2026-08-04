@@ -1,0 +1,116 @@
+name: quill-demo
+
+services:
+  # ---------------------------------------------------------------------------
+  # An ordinary Postgres, the one this app would have anyway. The single thing
+  # done for Quill is wal_level=logical, without which CDC cannot start.
+  # ---------------------------------------------------------------------------
+  postgres:
+    image: postgres:16
+    container_name: forkly-postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: zjadlo
+    command:
+      - postgres
+      - -c
+      - wal_level=logical
+      - -c
+      - max_replication_slots=10
+      - -c
+      - max_wal_senders=10
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./db/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d zjadlo"]
+      interval: 3s
+      timeout: 3s
+      retries: 30
+
+  # ---------------------------------------------------------------------------
+  # The Forkly app. A marketplace operations console. Zero AI inside.
+  # ---------------------------------------------------------------------------
+  app:
+    image: node:20-alpine
+    container_name: forkly-app
+    working_dir: /srv
+    command: sh -c "npm install --no-audit --no-fund && node server.js"
+    environment:
+      PORT: "3000"
+      DATABASE_URL: postgres://zjadlo_app:zjadlo_app@postgres:5432/zjadlo
+      # Only the key is required. Domain, app slug, widget and agent are
+      # discovered from the running Quill instance, so provisioning can happen
+      # after this container started without needing a restart.
+      QUILL_API_KEY: ${QUILL_API_KEY:-}
+      QUILL_DOMAIN: ${QUILL_DOMAIN:-}
+      QUILL_APP_SLUG: ${QUILL_APP_SLUG:-}
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./app:/srv
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  # ---------------------------------------------------------------------------
+  # One-shot provisioning. Runs after Quill is up, configures it, then exits.
+  # Both scripts are idempotent, so this is harmless on every subsequent `up`.
+  # The app discovers the result by polling Quill, so nothing needs restarting.
+  # ---------------------------------------------------------------------------
+  setup:
+    image: node:20-alpine
+    container_name: forkly-setup
+    working_dir: /w
+    command: sh -c "node quill/provision.mjs && node quill/finish-setup.mjs"
+    environment:
+      QUILL_API_KEY: ${QUILL_API_KEY:-}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      QUILL_MODEL: ${QUILL_MODEL:-gpt-5.3-chat-latest}
+      QUILL_APP_SLUG: ${QUILL_APP_SLUG:-}
+    volumes:
+      - .:/w
+    depends_on:
+      postgres:
+        condition: service_healthy
+      quill:
+        condition: service_started
+    restart: "no"
+
+  # ---------------------------------------------------------------------------
+  # The pilot deck. A static page that drives the demo.
+  # ---------------------------------------------------------------------------
+  pilot:
+    image: node:20-alpine
+    container_name: forkly-pilot
+    working_dir: /srv
+    command: sh -c "npx --yes serve -s . -l 8080"
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./pilot:/srv
+
+  # ---------------------------------------------------------------------------
+  # Quill. QUILL_API_KEY gets the primary/ prefix, the licence key does not.
+  # ---------------------------------------------------------------------------
+  quill:
+    image: thegoldenplatypus/quill:latest
+    container_name: forkly-quill
+    environment:
+      QUILL_LICENSE_KEY: ${QUILL_LICENSE_KEY}
+      QUILL_API_KEY: primary/${QUILL_API_KEY}
+    ports:
+      - "443:443"
+    volumes:
+      # The image keeps its state in /var/lib/quill. Mounting anywhere else
+      # looks fine and quietly loses everything when the container is recreated.
+      - quill-data:/var/lib/quill
+    restart: unless-stopped
+
+volumes:
+  pgdata:
+  quill-data:
+

@@ -1,0 +1,13 @@
+# Keys. Never commit.
+.env
+
+# Certificate chain fetched from your own Quill instance.
+# Produced by scripts/fetch-quill-chain.sh, specific to your domain.
+app/certs/
+
+# Working files from provisioning
+.discover.json
+quill/provision.json
+
+# Dependencies
+app/node_modules/

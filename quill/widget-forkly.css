@@ -1,0 +1,96 @@
+/* Forkly theme for the Quill web widget.
+   Values are lifted straight from the app's own stylesheet so the assistant
+   reads as part of Forkly rather than as a third-party panel bolted on.
+   Only CSS reaches this page, the markup cannot be touched, so the branding
+   is done with backgrounds and pseudo elements. */
+:root {
+  --ai-bg:                 #12161d;   /* Forkly --panel   */
+  --ai-fg:                 #e8ecf3;   /* Forkly --text    */
+  --ai-border-color:       #222834;   /* Forkly --line    */
+  --ai-bubble-agent-bg:    #171c25;   /* Forkly --panel-2 */
+  --ai-user-bg:            #ff6b35;   /* Forkly --accent  */
+  --ai-user-fg:            #1a0e08;   /* dark on orange, ~6.5:1 */
+  --ai-input-bg:           #0e1116;   /* Forkly --bg-soft */
+  --ai-input-border-color: #2a3140;
+  --ai-radius-bubble:      13px;
+  --ai-radius-control:     10px;
+  --ai-font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, system-ui, sans-serif;
+}
+
+/* The host panel in Forkly already carries a title bar with the close button,
+   so the widget's own header would stack a second one on top of it. */
+#ai-chat-header { display: none; }
+
+/* ---------------------------------------------------------------- the feed
+   An empty dark rectangle looked unfinished, so the Forkly fork sits behind
+   the conversation as a watermark with a warm wash bled in from the top.
+   Both stay faint enough to read as texture, not as content. */
+#ai-chat-feed {
+  padding: 18px 16px 14px;
+  scrollbar-width: thin; scrollbar-color: #2a3140 transparent;
+  background-color: var(--ai-bg);
+  background-image:
+    radial-gradient(560px 300px at 50% -12%, rgba(255,107,53,.07), transparent 68%),
+    radial-gradient(420px 260px at 100% 104%, rgba(255,169,77,.05), transparent 70%),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ff6b35' stroke-width='1.4' stroke-linecap='round' opacity='.5'%3E%3Cpath d='M6 3v8a3 3 0 0 0 6 0V3M9 14v7'/%3E%3Cpath d='M17 3c-1.4 2-2 4.2-2 6.2S15.6 12 17 12s2-.8 2-2.8S18.4 5 17 3zM17 12v9'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: center top, right bottom, center 46%;
+  background-size: auto, auto, 108px 108px;
+}
+#ai-chat-feed::-webkit-scrollbar { width: 8px; }
+#ai-chat-feed::-webkit-scrollbar-thumb { background: #2a3140; border-radius: 4px; }
+#ai-chat-feed::-webkit-scrollbar-track { background: transparent; }
+
+/* ------------------------------------------------------------- the bubbles */
+.row {
+  /* A block fills its line, so a two word message painted a full width bar.
+     Shrink to the text and let max-width cap only the long answers. */
+  width: fit-content; max-width: 84%;
+  margin: 10px 0; padding: 10px 14px;
+  line-height: 1.58; font-size: 14px;
+  animation: row-in .28s cubic-bezier(.2,.9,.3,1) both;
+}
+
+/* Agent replies carry a small Forkly badge, cut from the same mark. */
+.row.agent {
+  position: relative;
+  margin-left: 36px;
+  border: 1px solid var(--ai-border-color);
+}
+.row.agent::before {
+  content: "";
+  position: absolute; left: -36px; top: 1px;
+  width: 26px; height: 26px; border-radius: 50%;
+  background-image:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23fff' stroke-width='2' stroke-linecap='round'%3E%3Cpath d='M6 3v8a3 3 0 0 0 6 0V3M9 14v7'/%3E%3Cpath d='M17 3c-1.4 2-2 4.2-2 6.2S15.6 12 17 12s2-.8 2-2.8S18.4 5 17 3zM17 12v9'/%3E%3C/svg%3E"),
+    linear-gradient(145deg, #ff8a4d, #ff6b35);
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 14px 14px, cover;
+  box-shadow: 0 3px 10px rgba(255,107,53,.3);
+}
+
+.row.user { font-weight: 500; box-shadow: 0 3px 12px rgba(255,107,53,.26); }
+
+@keyframes row-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+/* ------------------------------------------------------------ the composer */
+#ai-chat-form {
+  padding: 12px 16px 14px; gap: 9px;
+  background: linear-gradient(180deg, rgba(10,12,16,0), rgba(10,12,16,.5));
+}
+#ai-chat-input { font-size: 13.5px; transition: border-color .15s, box-shadow .15s; }
+#ai-chat-input::placeholder { color: #5f6878; }
+#ai-chat-input:focus {
+  outline: none;
+  border-color: #ff6b35;
+  box-shadow: 0 0 0 3px rgba(255,107,53,.16);
+}
+#ai-chat-form button {
+  font-weight: 600; font-size: 13.5px;
+  background: linear-gradient(145deg, #ff8a4d, #ff6b35);
+  box-shadow: 0 4px 14px rgba(255,107,53,.28);
+  transition: filter .15s, transform .12s;
+}
+#ai-chat-form button:hover  { filter: brightness(1.08); }
+#ai-chat-form button:active { transform: translateY(1px); }

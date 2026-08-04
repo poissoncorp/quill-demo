@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Forkly — Operations</title>
+<link rel="stylesheet" href="/style.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🍜</text></svg>">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">
+    <div class="mark" aria-hidden="true">
+      <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+        <path d="M6 3v8a3 3 0 0 0 6 0V3M9 14v7"/>
+        <path d="M17 3c-1.4 2-2 4.2-2 6.2S15.6 12 17 12s2-.8 2-2.8S18.4 5 17 3zM17 12v9"/>
+      </svg>
+    </div>
+    <div class="brandtext">
+      <strong>Forkly</strong>
+      <span>Operations console</span>
+    </div>
+  </div>
+
+  <nav class="tabs" id="tabs">
+    <button class="tab active" data-view="orders">Live orders</button>
+    <button class="tab" data-view="restaurants">Restaurants</button>
+    <button class="tab" data-view="couriers">Couriers</button>
+    <button class="tab" data-view="reviews">Reviews</button>
+  </nav>
+
+  <div class="topright">
+    <span class="clock" id="clock">--:--:--</span>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <section class="kpis" id="kpis">
+    <div class="kpi sk"></div><div class="kpi sk"></div><div class="kpi sk"></div>
+    <div class="kpi sk"></div><div class="kpi sk"></div><div class="kpi sk"></div>
+  </section>
+
+  <section class="panel">
+    <div class="panelhead">
+      <div class="panelheadtext">
+        <h2 id="panelTitle">Live orders</h2>
+        <p id="panelSub">Most recent orders across every zone.</p>
+      </div>
+      <div class="panelactions">
+        <div class="searchbox">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/>
+          </svg>
+          <input id="filter" type="search" placeholder="Filter rows" autocomplete="off">
+        </div>
+        <span class="rowcount" id="rowcount"></span>
+      </div>
+    </div>
+    <div class="tablewrap">
+      <table id="table"><thead id="thead"></thead><tbody id="tbody"></tbody></table>
+    </div>
+    <div class="panelfoot" id="panelfoot"></div>
+  </section>
+
+</main>
+
+<!-- Quill chat. Stays hidden until the backend mints a widget link. -->
+<div id="quill-launcher" class="qlaunch" hidden>
+  <div id="quill-panel" class="qpanel" hidden>
+    <div class="qhead">
+      <span class="qdot"></span>
+      <strong>Forkly Assistant</strong>
+      <span class="qtag">Quill</span>
+      <button id="quill-close" class="qclose" aria-label="Close">&times;</button>
+    </div>
+    <iframe id="quill-frame" title="Forkly Assistant" allow="clipboard-write"></iframe>
+  </div>
+  <div id="quill-teaser" class="qteaser" hidden>
+    <strong>Ask anything about your data</strong>
+    <span>Now available in Forkly</span>
+  </div>
+  <button id="quill-bubble" class="qbubble" aria-label="Open assistant">
+    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M21 11.5a8.4 8.4 0 0 1-9 8.4 8.9 8.9 0 0 1-4-.9L3 21l1.9-4.6A8.4 8.4 0 0 1 12 3a8.4 8.4 0 0 1 9 8.5z"/>
+    </svg>
+  </button>
+</div>
+
+<script src="/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Quill · live demo</title>
+<link rel="stylesheet" href="/pilot.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>✦</text></svg>">
+</head>
+<body>
+
+<div class="glow" aria-hidden="true"></div>
+
+<header class="hero">
+  <span class="badge">Quill</span>
+  <h1>Your app already has the data.<br><em>Give it a way to answer questions.</em></h1>
+  <div class="status" id="status">
+    <span class="dot wait" id="dotApp"><i></i>app</span>
+    <span class="dot wait" id="dotQuill"><i></i>Quill</span>
+    <span class="dot wait" id="dotData"><i></i>data</span>
+  </div>
+</header>
+
+<main>
+
+  <!-- 1 -->
+  <section class="act">
+    <div class="n">1</div>
+    <div class="body">
+      <h2>Everything is already in there</h2>
+      <p>Good app, solid database, complete data. The questions still arrive by Slack:
+         why was Friday bad in Riverside? Someone on the team stops what they are doing
+         and writes the query.</p>
+      <a class="btn ghost" href="http://localhost:3000" target="_blank" rel="noopener">
+        Open Forkly <span class="arr">↗</span>
+      </a>
+    </div>
+  </section>
+
+  <!-- 2 -->
+  <section class="act">
+    <div class="n">2</div>
+    <div class="body">
+      <h2>Enable Quill</h2>
+      <p>One call from Forkly's own backend. Nothing installed, nothing deployed.</p>
+
+      <div class="setup" id="setupBox" hidden>
+        <strong>One setup step left</strong>
+        <p id="setupText"></p>
+      </div>
+
+      <button id="enable" class="enable">
+        <span class="shine"></span>
+        <span class="label">Enable Quill</span>
+      </button>
+
+      <div class="took" id="took" hidden></div>
+
+      <div class="result" id="result" hidden>
+        <div class="rrow"><span class="tick">✓</span><strong>Forkly</strong><span>assistant is live in the app</span></div>
+        <div class="rrow"><span class="tick">✓</span><strong>This page</strong><span>same assistant, embedded below</span></div>
+        <div class="rrow"><span class="tick">✓</span><strong id="docCount">…</strong><span>documents mirrored from Postgres, kept current as it changes</span></div>
+        <div class="rmeta" id="rmeta"></div>
+      </div>
+
+      <button class="rawtoggle" id="rawToggle" hidden>technical detail</button>
+      <pre class="raw" id="raw" hidden></pre>
+    </div>
+  </section>
+
+  <!-- 3 -->
+  <section class="act locked" id="act3">
+    <div class="n">3</div>
+    <div class="body">
+      <h2>Ask it something</h2>
+      <p>The same assistant is now sitting in Forkly's corner and right here.
+         One agent, two surfaces.
+         <a class="inline" href="http://localhost:3000" target="_blank" rel="noopener">Open Forkly to see the bubble ↗</a></p>
+
+      <div class="asks">
+        <span>Try<em> · click to copy, then paste in the chat</em></span>
+        <button type="button" class="ask">Why do Friday deliveries fall apart in Riverside?</button>
+        <button type="button" class="ask">Which dish gets great reviews but loses us money?</button>
+        <button type="button" class="ask">Any courier who needs a word, despite good times?</button>
+      </div>
+
+      <div class="chatframe" id="chatframe">
+        <div class="chatempty">Enable Quill to load the assistant.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4 -->
+  <section class="act">
+    <div class="n">4</div>
+    <div class="body">
+      <h2>What it took to set up</h2>
+      <p>Three steps, done once, before this demo started.</p>
+
+      <ol class="steps">
+        <li><strong>Sync with your database</strong><span>Read only. Nothing in your schema changes.</span></li>
+        <li><strong>Create an agent</strong><span>You decide what it is allowed to ask.</span></li>
+        <li><strong>Put it in your app</strong><span>One link. No rebuild, no deploy.</span></li>
+      </ol>
+
+      <a class="btn ghost" id="openDash" href="#" target="_blank" rel="noopener">
+        See it in the dashboard <span class="arr">↗</span>
+      </a>
+    </div>
+  </section>
+
+  <section class="punch" id="punch"></section>
+
+  <footer class="resetbar">
+    <button id="reset" class="btn reset" title="Revoke the links and hide the bubble in Forkly">reset demo</button>
+  </footer>
+
+</main>
+
+<script src="/pilot.js"></script>
+</body>
+</html>
