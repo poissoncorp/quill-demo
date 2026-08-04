@@ -97,7 +97,10 @@ services:
   # Quill. QUILL_API_KEY gets the primary/ prefix, the licence key does not.
   # ---------------------------------------------------------------------------
   quill:
-    image: thegoldenplatypus/quill:latest
+    # Pinned by digest on purpose. The :latest tag moved during development
+    # and renamed API fields (widgetId -> channelId) plus the embed URL path,
+    # which broke the demo without a single line changing in this repo.
+    image: thegoldenplatypus/quill@sha256:1e27cad1763b45240852a3cc9d176a9a1da56665d47cbf35f9248d115b90a599
     container_name: forkly-quill
     environment:
       QUILL_LICENSE_KEY: ${QUILL_LICENSE_KEY}

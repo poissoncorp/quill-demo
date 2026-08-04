@@ -60,13 +60,16 @@ if (apps.some(a => a.slug === SLUG)) {
 
 // ---------------------------------------------------------------------------
 step(1, 'Testing the connection to Postgres');
-const conn = await api('POST', '/api/setup/connect', { provider: 'Npgsql', connectionString: CONN });
+// slug travels with every wizard call. The wizard keys its server-side state on
+// it, and on a clean state the call is rejected without it.
+const source = { provider: 'Npgsql', connectionString: CONN, slug: SLUG, appName: NAME };
+const conn = await api('POST', '/api/setup/connect', source);
 if (conn?.success === false) fail(`connect failed: ${JSON.stringify(conn.errors)}`);
 console.log('    ok');
 
 // ---------------------------------------------------------------------------
 step(2, 'Discovering the schema');
-const disc = await api('POST', '/api/setup/discover', { provider: 'Npgsql', connectionString: CONN });
+const disc = await api('POST', '/api/setup/discover', source);
 console.log(`    ${disc.tables.length} tables in ${disc.catalogName}`);
 
 const noKey = disc.tables.filter(t => !t.primaryKeyColumns?.length).map(t => t.sourceTableName);

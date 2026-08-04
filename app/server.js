@@ -202,15 +202,17 @@ async function discoverApp() {
         .then(r => (r.status === 200 ? r.json : null))
         .catch(() => null);
 
+    // The widget id has appeared under both names on this API, so accept either.
+    const widgetIdOf = (c) => c?.channelId || c?.widgetId || '';
     const channelOf = async (slug) => {
         const channels = await get(`/api/apps/${encodeURIComponent(slug)}/channels`);
-        return channels?.find(c => c.enabled && c.widgetId) || null;
+        return channels?.find(c => c.enabled && widgetIdOf(c)) || null;
     };
 
     if (quill.slug) {
         const live = await channelOf(quill.slug);
         if (live) {
-            quill.widgetId = quill.widgetId || live.widgetId;
+            quill.widgetId = quill.widgetId || widgetIdOf(live);
             quill.agentId  = quill.agentId  || live.agentId;
         }
         return;
@@ -226,7 +228,7 @@ async function discoverApp() {
         const live = await channelOf(a.slug);
         if (live) {
             quill.slug = a.slug;
-            quill.widgetId = quill.widgetId || live.widgetId;
+            quill.widgetId = quill.widgetId || widgetIdOf(live);
             quill.agentId  = quill.agentId  || live.agentId;
             return;
         }
@@ -335,7 +337,15 @@ async function mintLink(body) {
         err.detail = { endpoint, request: body, response: parsed ?? resp.raw.slice(0, 500) };
         throw err;
     }
-    const url = parsed?.url || parsed?.embedUrl;
+    // Quill builds the embed URL from the Host of the request that minted it,
+    // and we mint over the internal container address, so what comes back is
+    // http://quill:5000/... which no browser can use. Swap the origin for the
+    // public one and keep the path exactly as Quill produced it, because the
+    // shape of that path has changed between builds.
+    const raw = parsed?.url || parsed?.embedUrl;
+    const url = raw && quill.domain
+        ? raw.replace(/^https?:\/\/[^/]+/, `https://public.${quill.domain}`)
+        : raw;
     if (!url) {
         const err = new Error('No url in the response');
         err.detail = { endpoint, request: body, response: parsed ?? text.slice(0, 500) };
@@ -357,9 +367,15 @@ app.post('/api/quill/attach', async (req, res) => {
         });
     }
 
-    // agentId is not in the guide, but this version of the API requires it and
-    // returns 400 "agentId is required" without it.
+    // agentId is required here even though the guide does not list it.
+    //
+    // The channel identifier is sent under both names on purpose. Builds of
+    // Quill disagree about whether this field is called channelId or widgetId,
+    // and the one that is not recognised is ignored, so sending both works
+    // against either. Without the right one the call fails with a 400 naming
+    // the field it wanted.
     const base = {
+        channelId: quill.widgetId,
         widgetId: quill.widgetId,
         agentId: quill.agentId,
         ttlSeconds: Number(req.body?.ttlSeconds) || 3600,

@@ -82,10 +82,13 @@ The first row is `quill/provision.mjs`, the second `quill/finish-setup.mjs`. Bot
 
 ## Versions
 
-The compose file pins `thegoldenplatypus/quill:latest`. That is a moving tag: a future `docker pull` can bring a different build and break the demo without anything in this repo changing. If you need this to keep working unattended, pin the digest instead:
+The compose file pins the Quill image **by digest**, not by `:latest`. That is deliberate. During development the tag moved and the new build renamed API fields (`widgetId` became `channelId`) and changed the embed URL path, which broke the demo without a single line changing in this repo.
+
+To move to a newer build on purpose:
 
 ```bash
-docker inspect quill --format '{{index .RepoDigests 0}}'
+docker pull thegoldenplatypus/quill:latest
+docker image inspect thegoldenplatypus/quill:latest --format '{{index .RepoDigests 0}}'
 ```
 
-and put the result in `docker-compose.yml`.
+Put the result in `docker-compose.yml` and re-run the demo end to end before trusting it. The app already sends and accepts both `channelId` and `widgetId`, and rewrites the embed URL origin, so those two changes are covered.
