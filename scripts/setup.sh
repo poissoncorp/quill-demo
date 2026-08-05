@@ -67,6 +67,21 @@ kill $LOGS 2>/dev/null || true
 wait $LOGS 2>/dev/null || true
 
 code=$(docker inspect forkly-setup --format '{{.State.ExitCode}}' 2>/dev/null || echo 1)
+if [ "$code" != "0" ]; then
+    # The usual cause is the agent step: the model connection exists but not
+    # where the agent looks for it. Put it there and finish the job.
+    say "Linking the model connection to the app"
+    SLUG=$(grep -E '^QUILL_APP_SLUG=' .env | cut -d= -f2-)
+    SLUG=${SLUG:-forkly-demo}
+    # A distinct name on purpose: RavenDB rejects an app-scoped connection that
+    # collides with a server-wide one, and the server-wide "demo-llm" already
+    # exists by this point.
+    ./scripts/ensure-ai-connection.sh "$SLUG" forkly-llm || fail "could not attach the model connection"
+    say "Retrying setup"
+    docker compose up -d setup >/dev/null 2>&1
+    docker compose wait setup >/dev/null 2>&1 || true
+    code=$(docker inspect forkly-setup --format '{{.State.ExitCode}}' 2>/dev/null || echo 1)
+fi
 [ "$code" = "0" ] || fail "provisioning failed. Full output: docker compose logs setup"
 
 say "Waiting for the app to pick it up"

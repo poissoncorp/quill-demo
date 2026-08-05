@@ -70,6 +70,7 @@ services:
       QUILL_API_KEY: ${QUILL_API_KEY:-}
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       QUILL_MODEL: ${QUILL_MODEL:-gpt-5.3-chat-latest}
+      QUILL_CONNECTION_NAME: ${QUILL_CONNECTION_NAME:-forkly-llm}
       QUILL_APP_SLUG: ${QUILL_APP_SLUG:-}
     volumes:
       - .:/w

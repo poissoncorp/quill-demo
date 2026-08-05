@@ -31,9 +31,9 @@ Re-running `setup.sh` is safe; every step skips what already exists. Once `.env`
 | app says not configured | `docker compose logs app` |
 | Quill stuck on `NeedsActivation` | the licence key is wrong, or its setup package was already claimed, see the warning below |
 | app configured but the mirror stays empty | `curl -H "X-Api-Key: $QUILL_API_KEY" https://api.$QUILL_DOMAIN/api/apps/<slug>/cdc/errors` |
-| empty HTTP 500 creating the model connection | `docker compose logs quill`, see the licence note below |
+| `connection string ... not found in app` | expected once; `setup.sh` fixes it and retries, see the note below |
 
-> **Known blocker on the current image.** Everything in the quick start works except the last configuration step. Activation, provisioning and the mirror all succeed, the model connection is created, and then `setup/agent` rejects that connection with `connection string '<name>' not found in app '<slug>'`, even though the app's own `connection-strings` endpoint lists it. There is no app-scoped create route on this build and no ordering that avoids it, so a fresh install cannot reach a working agent. Verified on two separate licences. This needs fixing upstream; there is no workaround in this repo.
+> **One step needs a workaround, and it is automatic.** On current builds a model connection can only be created server-wide, and `setup/agent` then refuses it with `connection string '<name>' not found in app '<slug>'`, even though the app's own endpoint lists it. `setup.sh` detects that failure and writes the connection straight into the app's database through RavenDB's admin API, then retries. You should see "Linking the model connection to the app" go past. It is in `scripts/ensure-ai-connection.sh` and should be deleted once Quill grows an app-scoped route.
 
 > **Back up the Quill volume.** On first start Quill downloads a one-time setup package tied to your licence and keeps it in the `quill-data` volume. The licence API will not issue it twice: starting fresh with the same key fails with `license API returned 404 Not Found retrieving the setup package` and bootstrap never leaves `NeedsActivation`. Treat that volume like a certificate, not a cache.
 

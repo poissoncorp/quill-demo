@@ -101,10 +101,12 @@ step(1, 'Model connection');
 // QUILL_CONNECTION_NAME pins a specific connection, which is how you switch
 // models: create a second connection and point the agent at it.
 const WANTED = process.env.QUILL_CONNECTION_NAME || '';
+// Newer builds call it `identifier`, older ones `name`.
+const nameOf = (c) => c?.identifier || c?.name || '';
 const existing = await listConnections();
 let connectionName = WANTED
-    ? existing.find(i => i.name === WANTED)?.name
-    : existing[0]?.name;
+    ? existing.map(nameOf).find(n => n === WANTED)
+    : nameOf(existing[0]);
 
 if (connectionName) {
     console.log(`    reusing existing connection: ${connectionName}`);
@@ -394,7 +396,7 @@ const channel = await api('POST', `/api/apps/${SLUG}/setup/channel`, {
     // the app on :3000 and in the pilot deck on :8080.
     allowedOrigins: [],
 });
-const widgetId = channel?.widgetId ?? channel?.id;
+const widgetId = channel?.channelId ?? channel?.widgetId ?? channel?.id;
 if (!widgetId) fail('setup/channel returned no widgetId:\n' + JSON.stringify(channel).slice(0, 400));
 console.log(`    widgetId: ${widgetId}`);
 
