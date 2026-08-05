@@ -67,22 +67,20 @@ kill $LOGS 2>/dev/null || true
 wait $LOGS 2>/dev/null || true
 
 code=$(docker inspect forkly-setup --format '{{.State.ExitCode}}' 2>/dev/null || echo 1)
-if [ "$code" != "0" ]; then
-    # The usual cause is the agent step: the model connection exists but not
-    # where the agent looks for it. Put it there and finish the job.
-    say "Linking the model connection to the app"
-    SLUG=$(grep -E '^QUILL_APP_SLUG=' .env | cut -d= -f2-)
-    SLUG=${SLUG:-forkly-demo}
-    # A distinct name on purpose: RavenDB rejects an app-scoped connection that
-    # collides with a server-wide one, and the server-wide "demo-llm" already
-    # exists by this point.
-    ./scripts/ensure-ai-connection.sh "$SLUG" forkly-llm || fail "could not attach the model connection"
-    say "Retrying setup"
-    docker compose up -d setup >/dev/null 2>&1
-    docker compose wait setup >/dev/null 2>&1 || true
-    code=$(docker inspect forkly-setup --format '{{.State.ExitCode}}' 2>/dev/null || echo 1)
-fi
 [ "$code" = "0" ] || fail "provisioning failed. Full output: docker compose logs setup"
+
+# The app exists now, so the model connection can be put where the agent will
+# look for it. This has to happen before finish-setup runs, not after it fails:
+# RavenDB rejects an app-scoped connection whose name collides with a
+# server-wide one, and finish-setup would create exactly such a collision.
+say "Linking the model connection to the app"
+SLUG=$(grep -E '^QUILL_APP_SLUG=' .env | cut -d= -f2-)
+SLUG=${SLUG:-forkly-demo}
+CONN="${QUILL_CONNECTION_NAME:-$SLUG-llm}"
+./scripts/ensure-ai-connection.sh "$SLUG" "$CONN"     || fail "could not attach the model connection"
+
+say "Creating the agent and the widget channel"
+docker compose run --rm -e QUILL_CONNECTION_NAME="$CONN" configure 2>&1 | sed 's/^/     /'     || fail "agent setup failed. Full output: docker compose logs configure"
 
 say "Waiting for the app to pick it up"
 for _ in $(seq 1 30); do

@@ -65,7 +65,7 @@ services:
     image: node:20-alpine
     container_name: forkly-setup
     working_dir: /w
-    command: sh -c "node quill/provision.mjs && node quill/finish-setup.mjs"
+    command: node quill/provision.mjs
     environment:
       QUILL_API_KEY: ${QUILL_API_KEY:-}
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
@@ -79,6 +79,27 @@ services:
         condition: service_healthy
       quill:
         condition: service_started
+    restart: "no"
+
+  # ---------------------------------------------------------------------------
+  # Second half of the setup: model connection, agent, channel. Kept behind a
+  # profile because it has to run after scripts/ensure-ai-connection.sh, which
+  # needs the host's docker. scripts/setup.sh sequences the three.
+  # ---------------------------------------------------------------------------
+  configure:
+    image: node:20-alpine
+    container_name: forkly-configure
+    working_dir: /w
+    profiles: ["manual"]
+    command: node quill/finish-setup.mjs
+    environment:
+      QUILL_API_KEY: ${QUILL_API_KEY:-}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      QUILL_MODEL: ${QUILL_MODEL:-gpt-5.3-chat-latest}
+      QUILL_CONNECTION_NAME: ${QUILL_CONNECTION_NAME:-forkly-llm}
+      QUILL_APP_SLUG: ${QUILL_APP_SLUG:-}
+    volumes:
+      - .:/w
     restart: "no"
 
   # ---------------------------------------------------------------------------

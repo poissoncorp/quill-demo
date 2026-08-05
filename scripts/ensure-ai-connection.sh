@@ -21,7 +21,11 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 SLUG="${1:?usage: ensure-ai-connection.sh <app-slug> [connection-name]}"
-NAME="${2:-demo-llm}"
+# Derived from the slug by default. RavenDB refuses an app-scoped connection
+# whose name collides with a server-wide one, and server-wide entries persist
+# and cannot be deleted, so a fixed shared name breaks on the second app ever
+# created on an instance.
+NAME="${2:-$SLUG-llm}"
 MODEL="${QUILL_MODEL:-gpt-5.3-chat-latest}"
 KEY=$(grep -E '^OPENAI_API_KEY=' .env | cut -d= -f2-)
 [ -n "$KEY" ] || { echo "OPENAI_API_KEY is not set in .env" >&2; exit 1; }
