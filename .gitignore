@@ -1,5 +1,8 @@
-# Keys. Never commit.
+# Keys. Never commit. The glob matters: local copies and backups of .env are
+# just as sensitive as the file itself.
 .env
+.env.*
+!.env.example
 
 # Certificate chain fetched from your own Quill instance.
 # Produced by scripts/fetch-quill-chain.sh, specific to your domain.
@@ -14,3 +17,5 @@ app/node_modules/
 
 # Local machine overrides (e.g. pointing Quill at an existing volume)
 docker-compose.override.yml
+test-new-license.key
+.env.before-license-test
